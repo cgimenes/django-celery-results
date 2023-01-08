@@ -1,7 +1,7 @@
-import asyncio
 import binascii
 import json
 
+from asgiref.sync import async_to_sync
 from celery import maybe_signature
 from celery.backends.base import BaseDictBackend
 from celery.exceptions import ChordError
@@ -139,7 +139,7 @@ class DatabaseBackend(BaseDictBackend):
         try:
             obj = self.TaskModel._default_manager.get_task(task_id)
         except SynchronousOnlyOperation:
-            obj = asyncio.run(self.TaskModel._default_manager.aget_task(task_id))
+            obj = async_to_sync(self.TaskModel._default_manager.aget_task)(task_id)
         res = obj.as_dict()
         meta = self.decode_content(obj, res.pop('meta', None)) or {}
         result = self.decode_content(obj, res.get('result'))
