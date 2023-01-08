@@ -107,7 +107,7 @@ class TaskResultManager(ResultManager):
 
         """
         try:
-            return self.aget(task_id=task_id)
+            return await self.aget(task_id=task_id)
         except self.model.DoesNotExist:
             if self._last_id == task_id:
                 self.warn_if_repeatable_read()
