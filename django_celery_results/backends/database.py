@@ -1,3 +1,4 @@
+import asyncio
 import binascii
 import json
 
@@ -7,6 +8,7 @@ from celery.exceptions import ChordError
 from celery.result import GroupResult, allow_join_result, result_from_tuple
 from celery.utils.log import get_logger
 from celery.utils.serialization import b64decode, b64encode
+from django.core.exceptions import SynchronousOnlyOperation
 from django.db import connection, transaction
 from django.db.utils import InterfaceError
 from kombu.exceptions import DecodeError
@@ -134,7 +136,10 @@ class DatabaseBackend(BaseDictBackend):
 
     def _get_task_meta_for(self, task_id):
         """Get task metadata for a task by id."""
-        obj = self.TaskModel._default_manager.get_task(task_id)
+        try:
+            obj = self.TaskModel._default_manager.get_task(task_id)
+        except SynchronousOnlyOperation:
+            obj = asyncio.run(self.TaskModel._default_manager.aget_task(task_id))
         res = obj.as_dict()
         meta = self.decode_content(obj, res.pop('meta', None)) or {}
         result = self.decode_content(obj, res.get('result'))

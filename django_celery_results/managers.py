@@ -7,7 +7,6 @@ from itertools import count
 from celery.utils.time import maybe_timedelta
 from django.conf import settings
 from django.db import connections, models, router, transaction
-from django.core.exceptions import SynchronousOnlyOperation
 
 from .utils import now, raw_delete
 
@@ -96,7 +95,7 @@ class TaskResultManager(ResultManager):
 
     _last_id = None
 
-    def aget_task(self, task_id):
+    async def aget_task(self, task_id):
         """Async get result for task by ``task_id``.
 
         Keyword Arguments:
@@ -131,8 +130,6 @@ class TaskResultManager(ResultManager):
                 self.warn_if_repeatable_read()
             self._last_id = task_id
             return self.model(task_id=task_id)
-        except SynchronousOnlyOperation:
-            return self.aget_task(task_id)
 
     @transaction_retry(max_retries=2)
     def store_result(self, content_type, content_encoding,
