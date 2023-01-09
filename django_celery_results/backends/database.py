@@ -146,8 +146,7 @@ class DatabaseBackend(BaseDictBackend):
 
             if loop and loop.is_running():
                 tsk = loop.create_task(self.TaskModel._default_manager.aget_task(task_id))
-                while not tsk.done():
-                    pass
+                loop.run_until_complete(tsk)
                 obj = tsk.result()
             else:
                 obj = asyncio.run(self.TaskModel._default_manager.aget_task(task_id))
